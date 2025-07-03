@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Permohonan Keluar Asrama - SMKA Baling</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .loader { border-top-color: #3498db; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .view { transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out; }
+        .view.hidden { opacity: 0; transform: scale(0.98); pointer-events: none; position: absolute; width: 100%;}
+        .input-field { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #D1D5DB; border-radius: 0.5rem; }
+        .action-btn { padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: 0.375rem; font-weight: 500; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 flex flex-col min-h-screen">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8 relative flex-grow">
+
+        <header class="text-center mb-10">
+            <img src="https://i.ibb.co/5hf6PqP9/smkab-T.png" alt="Logo SMKA Baling" class="w-24 h-24 mx-auto mb-4">
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-900 uppercase">Sekolah Menengah Kebangsaan Agama Baling</h1>
+            <p id="datetime" class="text-gray-600 mt-2 text-sm"></p>
+        </header>
+
+        <!-- ===== Bahagian Carian (View 1) ===== -->
+        <div id="searchView" class="view">
+            <div class="bg-white rounded-xl shadow-lg p-6 max-w-2xl mx-auto">
+                <div class="text-center">
+                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Sistem Permohonan Keluar Asrama/Pulang Bermalam</h1>
+                    <p class="text-gray-600 mb-6">Sila masukkan Kod Waris anda untuk meneruskan.</p>
+                </div>
+                <form id="searchForm" class="flex flex-col sm:flex-row gap-3 mb-6">
+                    <input type="text" id="kodWarisInput" placeholder="Masukkan Kod Waris..." class="flex-grow input-field">
+                    <button type="submit" id="searchButton" class="w-full sm:w-auto bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2">
+                        <span id="searchButtonText">Cari Maklumat</span>
+                        <div id="loadingSpinner" class="hidden loader ease-linear rounded-full border-2 border-t-2 border-gray-200 h-5 w-5" style="border-top-color: white;"></div>
+                    </button>
+                </form>
+                <div id="statusContainer" class="text-center py-5"><p id="statusMessage" class="text-gray-500">Sila mulakan carian.</p></div>
+            </div>
+        </div>
+
+        <!-- ===== Bahagian Paparan Maklumat (View 2) ===== -->
+        <div id="resultsView" class="view hidden">
+             <div class="bg-white rounded-xl shadow-lg p-6 max-w-4xl mx-auto">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 border-b pb-4">Maklumat Anak Jagaan</h2>
+                <form id="updateForm">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6 mb-8">
+                        <div>
+                            <h3 class="text-lg font-semibold text-blue-700 mb-3">Butiran Murid</h3>
+                            <div class="space-y-4 text-sm">
+                                <div><p class="font-medium text-gray-500">Nama Anak</p><p id="namaAnakDisplay" class="text-lg font-semibold text-gray-800"></p><input type="text" id="namaAnakInput" class="input-field hidden"></div>
+                                <div><p class="font-medium text-gray-500">Tingkatan</p><p id="tingkatanDisplay" class="text-lg font-semibold text-gray-800"></p><input type="text" id="tingkatanInput" class="input-field hidden"></div>
+                                <div><p class="font-medium text-gray-500">Jantina</p><p id="jantinaDisplay" class="text-lg font-semibold text-gray-800"></p><input type="text" id="jantinaInput" class="input-field hidden"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-blue-700 mb-3">Butiran Waris</h3>
+                            <div class="space-y-4 text-sm">
+                                <div><p class="font-medium text-gray-500">Nama Waris</p><p id="namaWarisDisplay" class="text-base text-gray-800"></p><input type="text" id="namaWarisInput" class="input-field hidden"></div>
+                                <div><p class="font-medium text-gray-500">Kod Waris</p><p id="kodWarisDisplay" class="text-base text-gray-800 font-mono"></p></div>
+                                <div><p class="font-medium text-gray-500">Email</p><p id="emailDisplay" class="text-base text-gray-800"></p><input type="email" id="emailInput" class="input-field hidden"></div>
+                                <div><p class="font-medium text-gray-500">No. Telefon</p><p id="noTelefonDisplay" class="text-base text-gray-800"></p><input type="tel" id="noTelefonInput" class="input-field hidden"></div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                <div id="historySection" class="mt-8">
+                    <h3 class="text-lg font-semibold text-blue-700 mb-3">Sejarah Permohonan</h3>
+                    <div class="overflow-x-auto border border-gray-200 rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Tarikh Mohon</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Tujuan</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Pelulus</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Tarikh Tindakan</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Tindakan</th>
+                                </tr>
+                            </thead>
+                            <tbody id="applicationHistoryBody" class="bg-white divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                    <p id="noHistoryMessage" class="hidden text-center text-gray-500 py-4">Tiada sejarah permohonan ditemui.</p>
+                </div>
+
+                <div id="actionButtons" class="mt-8 flex flex-col sm:flex-row justify-center gap-3">
+                    <button id="updateButton" class="bg-green-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700">Kemaskini Maklumat</button>
+                    <button id="newApplicationButton" class="bg-purple-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-purple-700">Permohonan Baru</button>
+                </div>
+                <div id="editButtons" class="hidden mt-8 flex flex-col sm:flex-row justify-center gap-3">
+                    <button id="saveButton" type="submit" form="updateForm" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2">
+                        <span>Simpan Perubahan</span>
+                        <div class="loader hidden ease-linear rounded-full border-2 border-t-2 border-gray-200 h-5 w-5" style="border-top-color: white;"></div>
+                    </button>
+                    <button id="cancelButton" type="button" class="bg-gray-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-gray-700">Batal</button>
+                </div>
+                <div class="mt-4 text-center"><button id="backToSearchButton" class="text-sm text-gray-500 hover:underline">« Kembali ke Carian</button></div>
+             </div>
+        </div>
+
+        <div id="applicationView" class="view hidden">
+             <div class="bg-white rounded-xl shadow-lg p-6 max-w-2xl mx-auto">
+                <h2 id="applicationTitle" class="text-2xl font-bold text-gray-900 mb-6 border-b pb-4">Borang Permohonan Keluar</h2>
+                <form id="applicationForm">
+                    <input type="hidden" id="appIdInput">
+                    <div class="space-y-4">
+                        <div><label class="font-medium text-gray-700">Nama Pemohon</label><input type="text" id="appNamaPemohon" class="input-field bg-gray-100" readonly></div>
+                        <div><label class="font-medium text-gray-700">Nama Anak</label><input type="text" id="appNamaAnak" class="input-field bg-gray-100" readonly></div>
+                        <div><label class="font-medium text-gray-700">Tujuan</label><textarea id="appTujuan" class="input-field" rows="3" required></textarea></div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><label class="font-medium text-gray-700">Tarikh Keluar</label><input type="date" id="appTarikhKeluar" class="input-field" required></div>
+                            <div><label class="font-medium text-gray-700">Masa Keluar</label><input type="time" id="appMasaKeluar" class="input-field" required></div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><label class="font-medium text-gray-700">Tarikh Kembali</label><input type="date" id="appTarikhKembali" class="input-field" required></div>
+                            <div><label class="font-medium text-gray-700">Masa Kembali</label><input type="time" id="appMasaKembali" class="input-field" required></div>
+                        </div>
+                        
+                        <div>
+                            <label class="font-medium text-gray-700">Muat Naik Bukti (Pilihan, < 5MB)</label>
+                            <input type="file" id="appBukti" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" accept="image/*">
+                            <p id="filePreview" class="text-xs text-gray-500 mt-1"></p>
+                        </div>
+
+                    </div>
+                    <div class="mt-8 flex flex-col sm:flex-row justify-center gap-3">
+                        <button id="appSubmitButton" type="submit" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2">
+                            <span id="appSubmitButtonText">Hantar Permohonan</span>
+                            <div class="loader hidden ease-linear rounded-full border-2 border-t-2 border-gray-200 h-5 w-5" style="border-top-color: white;"></div>
+                        </button>
+                        <button id="cancelApplicationButton" type="button" class="bg-gray-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-gray-700">Batal</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center text-sm text-gray-500 mt-auto py-4 border-t">
+        &copy; 2025 Hak Cipta Terpelihara Tc. Bakrizal Fahmi bin Abu Bakar.
+    </footer>
+
+    <script>
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw8emL3lIQtG6fnHvZFcL1p5J2EOcV08g1lADyl_C0xTN1_B9YtDDWSYmbh2DTvoEF3DA/exec';
+
+        const views={search:document.getElementById("searchView"),results:document.getElementById("resultsView"),application:document.getElementById("applicationView")},searchForm=document.getElementById("searchForm"),updateForm=document.getElementById("updateForm"),applicationForm=document.getElementById("applicationForm"),statusMessage=document.getElementById("statusMessage"),kodWarisInput=document.getElementById("kodWarisInput"),applicationHistoryBody=document.getElementById("applicationHistoryBody"),noHistoryMessage=document.getElementById("noHistoryMessage");let allDataCache=null,currentItem=null,selectedFile=null;function snakeToCamel(e){return e.toLowerCase().replace(/([_][a-z])/g,e=>e.toUpperCase().replace("_",""))}function switchView(e){Object.values(views).forEach(t=>{t.classList.add("hidden")}),views[e]&&views[e].classList.remove("hidden")}function setButtonLoading(e,t,o="Memproses..."){const n=e.querySelector("span"),a=e.querySelector(".loader");e&&(e.disabled=t),n&&t?(n.dataset.originalText=n.textContent,n.textContent=o):n&&(n.textContent=n.dataset.originalText||""),a&&a.classList.toggle("hidden",!t)}function setEditMode(e){updateForm.querySelectorAll('p[id$="Display"]').forEach(t=>{t.classList.toggle("hidden",e)}),updateForm.querySelectorAll('input[id$="Input"]').forEach(t=>{t.classList.toggle("hidden",!e)}),document.getElementById("actionButtons").classList.toggle("hidden",e),document.getElementById("editButtons").classList.toggle("hidden",!e),e&&(document.getElementById("namaAnakInput").value=currentItem.nama_anak,document.getElementById("tingkatanInput").value=currentItem.tingkatan,document.getElementById("jantinaInput").value=currentItem.jantina,document.getElementById("namaWarisInput").value=currentItem.nama_waris,document.getElementById("emailInput").value=currentItem.email,document.getElementById("noTelefonInput").value=currentItem.no_telefon)}async function postData(e){return await fetch(WEB_APP_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify(e)}),{status:"success"}}async function fetchData(){if(allDataCache)return allDataCache;statusMessage.textContent="Memuat turun data terkini...";const e=await fetch(WEB_APP_URL);if(!e.ok)throw new Error(`Ralat Rangkaian: ${e.status}`);const t=await e.json();if("error"===t.status)throw new Error(t.message);return allDataCache=t.data,allDataCache}function renderResults(e){currentItem=e,Object.keys(e).forEach(t=>{const o=snakeToCamel(t),n=document.getElementById(o+"Display");n&&(n.textContent=e[t]||"-")})}function getStatusBadge(e){let t="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ";return"LULUS"===(e=(e||"").toUpperCase())?t+"bg-green-100 text-green-800":"TOLAK"===e||"DIBATALKAN"===e?t+"bg-red-100 text-red-800":t+"bg-yellow-100 text-yellow-800"}function renderApplicationHistory(e){applicationHistoryBody.innerHTML="";const t=e.sort((e,t)=>new Date(t.timestamp)-new Date(e.timestamp));if(0===t.length)noHistoryMessage.classList.remove("hidden"),applicationHistoryBody.closest("div.overflow-x-auto").classList.add("hidden");else{noHistoryMessage.classList.add("hidden"),applicationHistoryBody.closest("div.overflow-x-auto").classList.remove("hidden");for(const o of t){const t=applicationHistoryBody.insertRow(),n=new Date(o.timestamp).toLocaleDateString("ms-MY",{day:"2-digit",month:"short",year:"numeric"});let a="-";o.tarikh_kelulusan&&(a=new Date(o.tarikh_kelulusan).toLocaleString("ms-MY",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}));let i="Tiada";"BARU"===(o.status||"").toUpperCase()&&(i=`\n                            <button class="action-btn bg-blue-100 text-blue-800 update-app-btn" data-id="${o.id_permohonan}">Kemaskini</button>\n                        `),t.innerHTML=`\n                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">${n}</td>\n                        <td class="px-4 py-3 text-sm text-gray-800">${o.tujuan||"-"}</td>\n                        <td class="px-4 py-3 whitespace-nowrap text-sm"><span class="${getStatusBadge(o.status)}">${o.status||"N/A"}</span></td>\n                        <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-700">${o.pelulus||"-"}</td>\n                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${a}</td>\n                        <td class="px-4 py-3 whitespace-nowrap text-sm space-x-2">${i}</td>\n                    `}}}async function refreshDataAndView(){allDataCache=null,statusMessage.textContent="Memuat semula data...";try{const e=await fetchData(),t=e.murid.find(e=>e.kod_waris.toString()===currentItem.kod_waris.toString());t&&(renderResults(t),renderApplicationHistory(e.permohonan.filter(e=>e.kod_waris.toString()===t.kod_waris.toString())))}catch(e){statusMessage.textContent=`Gagal memuat semula: ${e.message}`}finally{statusMessage.textContent=""}}document.getElementById("appBukti").addEventListener("change",e=>{const t=e.target.files[0];if(t){if(t.size>5242880)return alert("Saiz fail terlalu besar. Sila pilih gambar di bawah 5MB."),e.target.value="",selectedFile=null,void(document.getElementById("filePreview").textContent="");const o=new FileReader;o.onload=function(e){selectedFile={fileName:t.name,mimeType:t.type,fileData:e.target.result},document.getElementById("filePreview").textContent=`Fail dipilih: ${t.name}`},o.readAsDataURL(t)}else selectedFile=null,document.getElementById("filePreview").textContent=""}),applicationHistoryBody.addEventListener("click",async e=>{const t=e.target.closest(".update-app-btn");if(t){const e=t.dataset.id,o=allDataCache.permohonan.find(t=>t.id_permohonan===e);o&&(document.getElementById("applicationTitle").textContent="Kemaskini Permohonan",document.getElementById("appSubmitButtonText").textContent="Simpan Kemaskini",document.getElementById("appIdInput").value=o.id_permohonan,document.getElementById("appNamaPemohon").value=currentItem.nama_waris,document.getElementById("appNamaAnak").value=currentItem.nama_anak,document.getElementById("appTujuan").value=o.tujuan,document.getElementById("appTarikhKeluar").value=new Date(o.tarikh_keluar).toISOString().split("T")[0],document.getElementById("appMasaKeluar").value=o.masa_keluar,document.getElementById("appTarikhKembali").value=new Date(o.tarikh_kembali).toISOString().split("T")[0],document.getElementById("appMasaKembali").value=o.masa_kembali,switchView("application"))}}),document.getElementById("newApplicationButton").addEventListener("click",()=>{document.getElementById("applicationTitle").textContent="Borang Permohonan Keluar",document.getElementById("appSubmitButtonText").textContent="Hantar Permohonan",applicationForm.reset(),document.getElementById("appIdInput").value="",document.getElementById("appNamaPemohon").value=currentItem.nama_waris,document.getElementById("appNamaAnak").value=currentItem.nama_anak,selectedFile=null,document.getElementById("filePreview").textContent="",document.getElementById("appMasaKeluar").value="14:30",document.getElementById("appMasaKembali").value="17:00";const e=new Date,t=e.toISOString().split("T")[0];document.getElementById("appTarikhKeluar").setAttribute("min",t),document.getElementById("appTarikhKembali").setAttribute("min",t),switchView("application")}),applicationForm.addEventListener("submit",async e=>{e.preventDefault();const t=document.getElementById("appSubmitButton");setButtonLoading(t,!0,"Menghantar...");const o=document.getElementById("appIdInput").value,n=!!o,a={tujuan:document.getElementById("appTujuan").value,tarikhKeluar:document.getElementById("appTarikhKeluar").value,masaKeluar:document.getElementById("appMasaKeluar").value,tarikhKembali:document.getElementById("appTarikhKembali").value,masaKembali:document.getElementById("appMasaKembali").value,fileData:selectedFile?selectedFile.fileData:null,fileName:selectedFile?selectedFile.fileName:null},i={action:n?"updatePermohonan":"createPermohonan",data:n?{...a,id_permohonan:o}:{...a,kodWaris:currentItem.kod_waris,namaPemohon:currentItem.nama_waris,namaAnak:currentItem.nama_anak}};try{await postData(i),setTimeout(async()=>{alert(`Permohonan berjaya ${n?"dikemaskini":"dihantar"}!`),await refreshDataAndView(),switchView("results")},1500)}catch(e){alert(`Gagal: ${e.message}`),setButtonLoading(t,!1)}}),searchForm.addEventListener("submit",async e=>{e.preventDefault();const t=kodWarisInput.value.trim();if(!t)return void(statusMessage.textContent="Sila masukkan Kod Waris.");setButtonLoading(document.getElementById("searchButton"),!0,"Mencari...");try{const e=await fetchData(),o=e.murid.find(e=>e.kod_waris.toString().toLowerCase()===t.toLowerCase());o?(renderResults(o),renderApplicationHistory(e.permohonan.filter(e=>e.kod_waris.toString()===o.kod_waris.toString())),switchView("results")):statusMessage.textContent="Kod Waris tidak ditemui. Sila cuba lagi."}catch(e){statusMessage.textContent=`Ralat: ${e.message}`}finally{setButtonLoading(document.getElementById("searchButton"),!1)}}),updateForm.addEventListener("submit",async e=>{e.preventDefault();const t=document.getElementById("saveButton");setButtonLoading(t,!0,"Menyimpan...");const o={kod_waris:currentItem.kod_waris,nama_waris:document.getElementById("namaWarisInput").value,email:document.getElementById("emailInput").value,no_telefon:document.getElementById("noTelefonInput").value,nama_anak:document.getElementById("namaAnakInput").value,jantina:document.getElementById("jantinaInput").value,tingkatan:document.getElementById("tingkatanInput").value};try{await postData({action:"update",data:o}),setTimeout(async()=>{renderResults(o),allDataCache=null,alert("Maklumat berjaya dikemaskini!"),setEditMode(!1)},1500)}catch(e){alert(`Gagal mengemaskini: ${e.message}`)}finally{setButtonLoading(t,!1)}}),document.getElementById("updateButton").addEventListener("click",()=>setEditMode(!0)),document.getElementById("cancelButton").addEventListener("click",()=>setEditMode(!1)),document.getElementById("cancelApplicationButton").addEventListener("click",()=>switchView("results")),document.getElementById("backToSearchButton").addEventListener("click",()=>{kodWarisInput.value="",statusMessage.textContent="Sila mulakan carian.",switchView("search")}),document.addEventListener("DOMContentLoaded",()=>{const e=document.getElementById("datetime");function t(){const o=new Date;e.textContent=o.toLocaleDateString("ms-MY",{weekday:"long",year:"numeric",month:"long",day:"numeric",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:!0})}t(),setInterval(t,1e3);const o=document.getElementById("appTarikhKeluar"),n=document.getElementById("appTarikhKembali");o.addEventListener("input",()=>{const e=o.value;if(e){const t=new Date(e);t.setDate(t.getDate()+2);const a=t.toISOString().split("T")[0];n.value=a,n.setAttribute("min",e)}else n.value="",n.removeAttribute("min")})}),switchView("search");
+
+    </script>
+</body>
+</html>
